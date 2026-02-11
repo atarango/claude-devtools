@@ -32,12 +32,16 @@ export async function extractCwd(filePath: string): Promise<string | null> {
       const entry = JSON.parse(line) as ChatHistoryEntry;
       // Only conversational entries have cwd
       if ('cwd' in entry && entry.cwd) {
+        rl.close();
         fileStream.destroy();
         return entry.cwd;
       }
     }
   } catch (error) {
     logger.error(`Error extracting cwd from ${filePath}:`, error);
+  } finally {
+    rl.close();
+    fileStream.destroy();
   }
 
   return null;

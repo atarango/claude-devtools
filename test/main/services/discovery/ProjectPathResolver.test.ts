@@ -18,9 +18,15 @@ function createSessionLine(cwd: string): string {
 describe('ProjectPathResolver', () => {
   const tempDirs: string[] = [];
 
-  afterEach(() => {
+  afterEach(async () => {
+    // Allow Windows file handles from readline/streams to be released
+    await new Promise((resolve) => setTimeout(resolve, 50));
     for (const tempDir of tempDirs) {
-      fs.rmSync(tempDir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+      try {
+        fs.rmSync(tempDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+      } catch {
+        // Ignore cleanup failures to prevent cascading test errors on Windows
+      }
     }
     tempDirs.length = 0;
   });
