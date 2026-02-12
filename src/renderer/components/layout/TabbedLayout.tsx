@@ -6,6 +6,7 @@
  * - Main content: PaneContainer with one or more panes, each with TabBar + content
  */
 
+import { isElectronMode } from '@renderer/api';
 import { getTrafficLightPaddingForZoom } from '@renderer/constants/layout';
 import { useKeyboardShortcuts } from '@renderer/hooks/useKeyboardShortcuts';
 import { useZoomFactor } from '@renderer/hooks/useZoomFactor';
@@ -64,7 +65,7 @@ export const TabbedLayout = (): React.JSX.Element => {
   // Enable keyboard shortcuts
   useKeyboardShortcuts();
   const zoomFactor = useZoomFactor();
-  const trafficLightPadding = getTrafficLightPaddingForZoom(zoomFactor);
+  const trafficLightPadding = isElectronMode() ? getTrafficLightPaddingForZoom(zoomFactor) : 0;
 
   return (
     <div

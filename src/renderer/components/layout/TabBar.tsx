@@ -11,6 +11,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useDroppable } from '@dnd-kit/core';
 import { horizontalListSortingStrategy, SortableContext } from '@dnd-kit/sortable';
+import { isElectronMode } from '@renderer/api';
 import { HEADER_ROW1_HEIGHT } from '@renderer/constants/layout';
 import { useStore } from '@renderer/store';
 import { Bell, PanelLeft, Plus, RefreshCw, Search, Settings } from 'lucide-react';
@@ -250,7 +251,8 @@ export const TabBar = ({ paneId }: TabBarProps): React.JSX.Element => {
             sidebarCollapsed && isLeftmostPane
               ? 'var(--macos-traffic-light-padding-left, 72px)'
               : '8px',
-          WebkitAppRegion: sidebarCollapsed && isLeftmostPane ? 'drag' : undefined,
+          WebkitAppRegion:
+            isElectronMode() && sidebarCollapsed && isLeftmostPane ? 'drag' : undefined,
           backgroundColor: 'var(--color-surface)',
           borderBottom: '1px solid var(--color-border)',
           opacity: isFocused || paneCount === 1 ? 1 : 0.7,
@@ -382,20 +384,22 @@ export const TabBar = ({ paneId }: TabBarProps): React.JSX.Element => {
           )}
         </button>
 
-        {/* Settings gear icon */}
-        <button
-          onClick={openSettingsTab}
-          onMouseEnter={() => setSettingsHover(true)}
-          onMouseLeave={() => setSettingsHover(false)}
-          className="rounded-md p-2 transition-colors"
-          style={{
-            color: settingsHover ? 'var(--color-text)' : 'var(--color-text-muted)',
-            backgroundColor: settingsHover ? 'var(--color-surface-raised)' : 'transparent',
-          }}
-          title="Settings"
-        >
-          <Settings className="size-4" />
-        </button>
+        {/* Settings gear icon (Electron only - browser can't access native settings) */}
+        {isElectronMode() && (
+          <button
+            onClick={openSettingsTab}
+            onMouseEnter={() => setSettingsHover(true)}
+            onMouseLeave={() => setSettingsHover(false)}
+            className="rounded-md p-2 transition-colors"
+            style={{
+              color: settingsHover ? 'var(--color-text)' : 'var(--color-text-muted)',
+              backgroundColor: settingsHover ? 'var(--color-surface-raised)' : 'transparent',
+            }}
+            title="Settings"
+          >
+            <Settings className="size-4" />
+          </button>
+        )}
       </div>
 
       {/* Context menu */}

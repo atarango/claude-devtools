@@ -39,6 +39,12 @@ function getImpl(): ElectronAPI {
  * In browser: delegates to `HttpAPIClient` (created on first use).
  * In tests: delegates to whatever mock is installed on `window.electronAPI`.
  */
+/**
+ * Whether the app is running inside Electron (true) or in a browser via HTTP server (false).
+ * Use this to hide Electron-only UI (settings, traffic lights, etc.) in browser mode.
+ */
+export const isElectronMode = (): boolean => !!window.electronAPI;
+
 export const api: ElectronAPI = new Proxy({} as ElectronAPI, {
   get(_target, prop, receiver) {
     const impl = getImpl();

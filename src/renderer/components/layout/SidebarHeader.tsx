@@ -13,6 +13,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+import { isElectronMode } from '@renderer/api';
 import { HEADER_ROW1_HEIGHT, HEADER_ROW2_HEIGHT } from '@renderer/constants/layout';
 import { useStore } from '@renderer/store';
 import { truncateMiddle } from '@renderer/utils/stringUtils';
@@ -330,8 +331,10 @@ export const SidebarHeader = (): React.JSX.Element => {
         style={
           {
             height: `${HEADER_ROW1_HEIGHT}px`,
-            paddingLeft: 'var(--macos-traffic-light-padding-left, 72px)',
-            WebkitAppRegion: 'drag',
+            paddingLeft: isElectronMode()
+              ? 'var(--macos-traffic-light-padding-left, 72px)'
+              : '16px',
+            WebkitAppRegion: isElectronMode() ? 'drag' : undefined,
           } as React.CSSProperties
         }
       >
