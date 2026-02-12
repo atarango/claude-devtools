@@ -2,6 +2,7 @@
  * Update slice - manages OTA auto-update state and actions.
  */
 
+import { api } from '@renderer/api';
 import { createLogger } from '@shared/utils/logger';
 
 import type { AppState } from '../types';
@@ -54,20 +55,20 @@ export const createUpdateSlice: StateCreator<AppState, [], [], UpdateSlice> = (s
 
   checkForUpdates: () => {
     set({ updateStatus: 'checking', updateError: null });
-    window.electronAPI.updater.check().catch((error) => {
+    api.updater.check().catch((error) => {
       logger.error('Failed to check for updates:', error);
     });
   },
 
   downloadUpdate: () => {
     set({ showUpdateDialog: false, showUpdateBanner: true, downloadProgress: 0 });
-    window.electronAPI.updater.download().catch((error) => {
+    api.updater.download().catch((error) => {
       logger.error('Failed to download update:', error);
     });
   },
 
   installUpdate: () => {
-    window.electronAPI.updater.install().catch((error) => {
+    api.updater.install().catch((error) => {
       logger.error('Failed to install update:', error);
     });
   },

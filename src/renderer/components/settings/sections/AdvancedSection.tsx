@@ -4,6 +4,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { api } from '@renderer/api';
 import appIcon from '@renderer/favicon.png';
 import { useStore } from '@renderer/store';
 import { CheckCircle, Code2, Download, Loader2, RefreshCw, Upload } from 'lucide-react';
@@ -44,7 +45,7 @@ export const AdvancedSection = ({
   }, [updateStatus]);
 
   useEffect(() => {
-    window.electronAPI.getAppVersion().then(setVersion).catch(console.error);
+    api.getAppVersion().then(setVersion).catch(console.error);
   }, []);
 
   const handleCheckForUpdates = useCallback(() => {

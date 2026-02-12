@@ -9,6 +9,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { api } from '@renderer/api';
 import { useStore } from '@renderer/store';
 import { createLogger } from '@shared/utils/logger';
 import { useShallow } from 'zustand/react/shallow';
@@ -220,11 +221,7 @@ export const CommandPalette = (): React.JSX.Element | null => {
       latestSearchRequestRef.current = requestId;
       setLoading(true);
       try {
-        const searchResult = await window.electronAPI.searchSessions(
-          selectedProjectId,
-          query.trim(),
-          50
-        );
+        const searchResult = await api.searchSessions(selectedProjectId, query.trim(), 50);
         if (latestSearchRequestRef.current !== requestId) {
           return;
         }

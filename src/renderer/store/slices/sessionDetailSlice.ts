@@ -2,6 +2,7 @@
  * Session detail slice - manages session detail, conversation, and stats.
  */
 
+import { api } from '@renderer/api';
 import { asEnhancedChunkArray } from '@renderer/types/data';
 import { findTabBySession, truncateLabel } from '@renderer/types/tabs';
 import { processSessionClaudeMd } from '@renderer/utils/claudeMdTracker';
@@ -163,7 +164,7 @@ export const createSessionDetailSlice: StateCreator<AppState, [], [], SessionDet
       });
     }
     try {
-      const detail = await window.electronAPI.getSessionDetail(projectId, sessionId);
+      const detail = await api.getSessionDetail(projectId, sessionId);
       if (requestGeneration !== sessionDetailFetchGeneration) {
         return;
       }
@@ -192,7 +193,7 @@ export const createSessionDetailSlice: StateCreator<AppState, [], [], SessionDet
         // Fetch real CLAUDE.md token data
         let claudeMdTokenData: Record<string, ClaudeMdFileInfo> = {};
         try {
-          claudeMdTokenData = await window.electronAPI.readClaudeMdFiles(projectRoot);
+          claudeMdTokenData = await api.readClaudeMdFiles(projectRoot);
           if (requestGeneration !== sessionDetailFetchGeneration) {
             return;
           }
@@ -227,7 +228,7 @@ export const createSessionDetailSlice: StateCreator<AppState, [], [], SessionDet
               Array.from(directoryPaths).map(async (fullPath) => {
                 try {
                   const dirPath = fullPath.replace(/[\\/]CLAUDE\.md$/, '');
-                  const fileInfo = await window.electronAPI.readDirectoryClaudeMd(dirPath);
+                  const fileInfo = await api.readDirectoryClaudeMd(dirPath);
                   return { fullPath, fileInfo, error: false };
                 } catch (err) {
                   logger.error('Failed to read directory CLAUDE.md:', fullPath, err);
@@ -324,7 +325,7 @@ export const createSessionDetailSlice: StateCreator<AppState, [], [], SessionDet
         const mentionedFileResults = await Promise.all(
           Array.from(mentionedFilePaths).map(async (filePath) => {
             try {
-              const fileInfo = await window.electronAPI.readMentionedFile(filePath, projectRoot);
+              const fileInfo = await api.readMentionedFile(filePath, projectRoot);
               return { filePath, fileInfo };
             } catch (err) {
               logger.error('Failed to read mentioned file:', filePath, err);
@@ -471,7 +472,7 @@ export const createSessionDetailSlice: StateCreator<AppState, [], [], SessionDet
     sessionRefreshInFlight.add(refreshKey);
 
     try {
-      const detail = await window.electronAPI.getSessionDetail(projectId, sessionId);
+      const detail = await api.getSessionDetail(projectId, sessionId);
 
       // Drop stale responses if a newer refresh started while this one was in flight.
       if (sessionRefreshGeneration.get(refreshKey) !== generation) {

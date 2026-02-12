@@ -2,6 +2,7 @@
  * Store index - combines all slices and exports the unified store.
  */
 
+import { api } from '@renderer/api';
 import { create } from 'zustand';
 
 import { createConfigSlice } from './slices/configSlice';
@@ -93,8 +94,8 @@ export function initializeNotificationListeners(): () => void {
   };
 
   // Listen for new notifications from main process
-  if (window.electronAPI.notifications?.onNew) {
-    const cleanup = window.electronAPI.notifications.onNew((_event: unknown, error: unknown) => {
+  if (api.notifications?.onNew) {
+    const cleanup = api.notifications.onNew((_event: unknown, error: unknown) => {
       // Cast the error to DetectedError type
       const notification = error as DetectedError;
       if (notification?.id) {
@@ -113,8 +114,8 @@ export function initializeNotificationListeners(): () => void {
   }
 
   // Listen for notification updates from main process
-  if (window.electronAPI.notifications?.onUpdated) {
-    const cleanup = window.electronAPI.notifications.onUpdated(
+  if (api.notifications?.onUpdated) {
+    const cleanup = api.notifications.onUpdated(
       (_event: unknown, payload: { total: number; unreadCount: number }) => {
         const unreadCount =
           typeof payload.unreadCount === 'number' && Number.isFinite(payload.unreadCount)
@@ -129,8 +130,8 @@ export function initializeNotificationListeners(): () => void {
   }
 
   // Navigate to error when user clicks a native OS notification
-  if (window.electronAPI.notifications?.onClicked) {
-    const cleanup = window.electronAPI.notifications.onClicked((_event: unknown, data: unknown) => {
+  if (api.notifications?.onClicked) {
+    const cleanup = api.notifications.onClicked((_event: unknown, data: unknown) => {
       const error = data as DetectedError;
       if (error?.id && error?.sessionId && error?.projectId) {
         useStore.getState().navigateToError(error);
@@ -161,8 +162,8 @@ export function initializeNotificationListeners(): () => void {
   };
 
   // Listen for task-list file changes to refresh currently viewed session metadata
-  if (window.electronAPI.onTodoChange) {
-    const cleanup = window.electronAPI.onTodoChange((event) => {
+  if (api.onTodoChange) {
+    const cleanup = api.onTodoChange((event) => {
       if (!event.sessionId || event.type === 'unlink') {
         return;
       }
@@ -198,8 +199,8 @@ export function initializeNotificationListeners(): () => void {
   }
 
   // Listen for file changes to auto-refresh current session and detect new sessions
-  if (window.electronAPI.onFileChange) {
-    const cleanup = window.electronAPI.onFileChange((event) => {
+  if (api.onFileChange) {
+    const cleanup = api.onFileChange((event) => {
       // Skip unlink events
       if (event.type === 'unlink') {
         return;
@@ -234,8 +235,8 @@ export function initializeNotificationListeners(): () => void {
   }
 
   // Listen for updater status events from main process
-  if (window.electronAPI.updater?.onStatus) {
-    const cleanup = window.electronAPI.updater.onStatus((_event: unknown, status: unknown) => {
+  if (api.updater?.onStatus) {
+    const cleanup = api.updater.onStatus((_event: unknown, status: unknown) => {
       const s = status as UpdaterStatus;
       switch (s.type) {
         case 'checking':
@@ -279,8 +280,8 @@ export function initializeNotificationListeners(): () => void {
   }
 
   // Listen for SSH connection status changes from main process
-  if (window.electronAPI.ssh?.onStatus) {
-    const cleanup = window.electronAPI.ssh.onStatus((_event: unknown, status: unknown) => {
+  if (api.ssh?.onStatus) {
+    const cleanup = api.ssh.onStatus((_event: unknown, status: unknown) => {
       const s = status as { state: string; host: string | null; error: string | null };
       useStore
         .getState()

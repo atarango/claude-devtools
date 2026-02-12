@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 
+import { api } from '@renderer/api';
 import { CopyButton } from '@renderer/components/common/CopyButton';
 import {
   CODE_BG,
@@ -107,7 +108,7 @@ function createViewerMarkdownComponents(searchCtx: SearchContext | null): Compon
         onClick={(e) => {
           e.preventDefault();
           if (href) {
-            void window.electronAPI.openExternal(href);
+            void api.openExternal(href);
           }
         }}
       >

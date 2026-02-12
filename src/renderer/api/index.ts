@@ -1,0 +1,51 @@
+/**
+ * Unified API adapter.
+ *
+ * When running inside Electron, the preload script exposes `window.electronAPI`.
+ * When running in a browser (e.g. via the HTTP server), we fall back to an
+ * HTTP+SSE client that implements the same interface.
+ *
+ * All renderer code should import `api` from this module instead of
+ * accessing `window.electronAPI` directly.
+ *
+ * The instance is resolved lazily on first property access so that test code
+ * can install mocks on `window.electronAPI` before the adapter resolves.
+ */
+
+import { HttpAPIClient } from './httpClient';
+
+import type { ElectronAPI } from '@shared/types/api';
+
+function getHttpPort(): number {
+  const params = new URLSearchParams(window.location.search);
+  return parseInt(params.get('port') ?? '3456', 10);
+}
+
+let httpClient: HttpAPIClient | null = null;
+
+function getImpl(): ElectronAPI {
+  if (window.electronAPI) return window.electronAPI;
+  // Lazily create the HTTP client only when actually needed (browser mode).
+  // Caching avoids creating multiple EventSource connections.
+  if (!httpClient) {
+    httpClient = new HttpAPIClient(getHttpPort());
+  }
+  return httpClient;
+}
+
+/**
+ * Proxy that lazily resolves the underlying ElectronAPI on first property access.
+ * In Electron: delegates to `window.electronAPI` (set by preload).
+ * In browser: delegates to `HttpAPIClient` (created on first use).
+ * In tests: delegates to whatever mock is installed on `window.electronAPI`.
+ */
+export const api: ElectronAPI = new Proxy({} as ElectronAPI, {
+  get(_target, prop, receiver) {
+    const impl = getImpl();
+    const value = Reflect.get(impl, prop, receiver) as unknown;
+    if (typeof value === 'function') {
+      return (value as (...args: unknown[]) => unknown).bind(impl);
+    }
+    return value;
+  },
+});

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 
+import { api } from '@renderer/api';
 import { useTabUI } from '@renderer/hooks/useTabUI';
 import { useStore } from '@renderer/store';
 import { createLogger } from '@shared/utils/logger';
@@ -360,7 +361,7 @@ const UserChatGroupInner = ({ userGroup }: Readonly<UserChatGroupProps>): React.
     const validatePaths = async (): Promise<void> => {
       try {
         const toValidate = pathMentions.map((m) => ({ type: 'path' as const, value: m.value }));
-        const results = await window.electronAPI.validateMentions(toValidate, projectPath);
+        const results = await api.validateMentions(toValidate, projectPath);
         if (isCurrent) {
           setValidatedPaths(results);
         }

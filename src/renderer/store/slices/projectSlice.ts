@@ -2,6 +2,8 @@
  * Project slice - manages project list state and selection.
  */
 
+import { api } from '@renderer/api';
+
 import { getSessionResetState } from '../utils/stateResetHelpers';
 
 import type { AppState } from '../types';
@@ -39,7 +41,7 @@ export const createProjectSlice: StateCreator<AppState, [], [], ProjectSlice> = 
   fetchProjects: async () => {
     set({ projectsLoading: true, projectsError: null });
     try {
-      const projects = await window.electronAPI.getProjects();
+      const projects = await api.getProjects();
       // Sort by most recent session (descending)
       const sorted = [...projects].sort(
         (a, b) => (b.mostRecentSession ?? 0) - (a.mostRecentSession ?? 0)

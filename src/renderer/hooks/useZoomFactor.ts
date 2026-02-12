@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 
+import { api } from '@renderer/api';
+
 /**
  * Reads current zoom factor and stays subscribed to zoom updates from main.
  */
@@ -9,7 +11,7 @@ export function useZoomFactor(): number {
   useEffect(() => {
     let isMounted = true;
 
-    void window.electronAPI
+    void api
       .getZoomFactor()
       .then((value) => {
         if (isMounted) {
@@ -20,7 +22,7 @@ export function useZoomFactor(): number {
         // Keep default 1 if zoom factor cannot be read.
       });
 
-    const unsubscribe = window.electronAPI.onZoomFactorChanged((value) => {
+    const unsubscribe = api.onZoomFactorChanged((value) => {
       setZoomFactor(value);
     });
 

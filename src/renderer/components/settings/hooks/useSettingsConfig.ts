@@ -5,6 +5,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { api } from '@renderer/api';
 import { useStore } from '@renderer/store';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -87,7 +88,7 @@ export function useSettingsConfig(): UseSettingsConfigReturn {
       try {
         setLoading(true);
         setError(null);
-        const loadedConfig = await window.electronAPI.config.get();
+        const loadedConfig = await api.config.get();
         setConfig(loadedConfig);
         setOptimisticConfig(loadedConfig);
       } catch (err) {
@@ -124,7 +125,7 @@ export function useSettingsConfig(): UseSettingsConfigReturn {
 
       try {
         setSaving(true);
-        const updatedConfig = await window.electronAPI.config.update(section, data);
+        const updatedConfig = await api.config.update(section, data as object);
         setConfig(updatedConfig);
         setOptimisticConfig(updatedConfig);
         // Update global store so other components (like useTheme) see the change

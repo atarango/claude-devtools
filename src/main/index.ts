@@ -17,7 +17,7 @@ import {
   WINDOW_ZOOM_FACTOR_CHANGED_CHANNEL,
 } from '@shared/constants';
 import { createLogger } from '@shared/utils/logger';
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import { join } from 'path';
 
 import { initializeIpcHandlers, removeIpcHandlers } from './ipc/handlers';
@@ -32,8 +32,13 @@ const getIconPath = (): string => {
 };
 
 const logger = createLogger('App');
-import { SSH_STATUS } from '@preload/constants/ipcChannels';
+// IPC channel constants (duplicated from @preload to avoid boundary violation)
+const SSH_STATUS = 'ssh:status';
+const HTTP_SERVER_START = 'httpServer:start';
+const HTTP_SERVER_STOP = 'httpServer:stop';
+const HTTP_SERVER_GET_STATUS = 'httpServer:getStatus';
 
+import { HttpServer } from './services/infrastructure/HttpServer';
 import {
   configManager,
   LocalFileSystemProvider,
@@ -55,13 +60,14 @@ let contextRegistry: ServiceContextRegistry;
 let notificationManager: NotificationManager;
 let updaterService: UpdaterService;
 let sshConnectionManager: SshConnectionManager;
+let httpServer: HttpServer;
 
 // File watcher event cleanup functions
 let fileChangeCleanup: (() => void) | null = null;
 let todoChangeCleanup: (() => void) | null = null;
 
 /**
- * Wires file watcher events from a ServiceContext to the renderer.
+ * Wires file watcher events from a ServiceContext to the renderer and HTTP SSE clients.
  * Cleans up previous listeners before adding new ones.
  */
 function wireFileWatcherEvents(context: ServiceContext): void {
@@ -77,25 +83,38 @@ function wireFileWatcherEvents(context: ServiceContext): void {
     todoChangeCleanup = null;
   }
 
-  // Wire file-change events
+  // Wire file-change events to renderer and HTTP SSE
   const fileChangeHandler = (event: unknown) => {
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('file-change', event);
     }
+    httpServer?.broadcast('file-change', event);
   };
   context.fileWatcher.on('file-change', fileChangeHandler);
   fileChangeCleanup = () => context.fileWatcher.off('file-change', fileChangeHandler);
 
-  // Wire todo-change events
+  // Wire todo-change events to renderer and HTTP SSE
   const todoChangeHandler = (event: unknown) => {
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('todo-change', event);
     }
+    httpServer?.broadcast('todo-change', event);
   };
   context.fileWatcher.on('todo-change', todoChangeHandler);
   todoChangeCleanup = () => context.fileWatcher.off('todo-change', todoChangeHandler);
 
   logger.info(`FileWatcher events wired for context: ${context.id}`);
+}
+
+/**
+ * Handles mode switch requests from the HTTP server.
+ * Switches the active context back to local when requested.
+ */
+async function handleModeSwitch(mode: 'local' | 'ssh'): Promise<void> {
+  if (mode === 'local' && contextRegistry.getActiveContextId() !== 'local') {
+    const { current } = contextRegistry.switch('local');
+    onContextSwitched(current);
+  }
 }
 
 /**
@@ -152,18 +171,103 @@ function initializeServices(): void {
 
   // Initialize updater service
   updaterService = new UpdaterService();
+  httpServer = new HttpServer();
 
   // Initialize IPC handlers with registry
   initializeIpcHandlers(contextRegistry, updaterService, sshConnectionManager, onContextSwitched);
 
-  // Forward SSH state changes to renderer
+  // HTTP Server control IPC handlers
+  ipcMain.handle(HTTP_SERVER_START, async () => {
+    try {
+      if (httpServer.isRunning()) {
+        return { success: true, data: { running: true, port: httpServer.getPort() } };
+      }
+      await startHttpServer(handleModeSwitch);
+      // Persist the enabled state
+      configManager.updateConfig('httpServer', { enabled: true, port: httpServer.getPort() });
+      return { success: true, data: { running: true, port: httpServer.getPort() } };
+    } catch (error) {
+      logger.error('Failed to start HTTP server via IPC:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to start server',
+      };
+    }
+  });
+
+  ipcMain.handle(HTTP_SERVER_STOP, async () => {
+    try {
+      await httpServer.stop();
+      // Persist the disabled state
+      configManager.updateConfig('httpServer', { enabled: false });
+      return { success: true, data: { running: false, port: httpServer.getPort() } };
+    } catch (error) {
+      logger.error('Failed to stop HTTP server via IPC:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to stop server',
+      };
+    }
+  });
+
+  ipcMain.handle(HTTP_SERVER_GET_STATUS, () => {
+    return { running: httpServer.isRunning(), port: httpServer.getPort() };
+  });
+
+  // Forward SSH state changes to renderer and HTTP SSE clients
   sshConnectionManager.on('state-change', (status: unknown) => {
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send(SSH_STATUS, status);
     }
+    httpServer.broadcast('ssh:status', status);
   });
 
+  // Forward notification events to HTTP SSE clients
+  notificationManager.on('notification-new', (notification: unknown) => {
+    httpServer.broadcast('notification:new', notification);
+  });
+  notificationManager.on('notification-updated', (data: unknown) => {
+    httpServer.broadcast('notification:updated', data);
+  });
+  notificationManager.on('notification-clicked', (data: unknown) => {
+    httpServer.broadcast('notification:clicked', data);
+  });
+
+  // Start HTTP server if enabled in config
+  const appConfig = configManager.getConfig();
+  if (appConfig.httpServer?.enabled) {
+    void startHttpServer(handleModeSwitch);
+  }
+
   logger.info('Services initialized successfully');
+}
+
+/**
+ * Starts the HTTP sidecar server with services from the active context.
+ */
+async function startHttpServer(
+  modeSwitchHandler: (mode: 'local' | 'ssh') => Promise<void>
+): Promise<void> {
+  try {
+    const config = configManager.getConfig();
+    const activeContext = contextRegistry.getActive();
+    const port = await httpServer.start(
+      {
+        projectScanner: activeContext.projectScanner,
+        sessionParser: activeContext.sessionParser,
+        subagentResolver: activeContext.subagentResolver,
+        chunkBuilder: activeContext.chunkBuilder,
+        dataCache: activeContext.dataCache,
+        updaterService,
+        sshConnectionManager,
+      },
+      modeSwitchHandler,
+      config.httpServer?.port ?? 3456
+    );
+    logger.info(`HTTP sidecar server running on port ${port}`);
+  } catch (error) {
+    logger.error('Failed to start HTTP server:', error);
+  }
 }
 
 /**
@@ -171,6 +275,11 @@ function initializeServices(): void {
  */
 function shutdownServices(): void {
   logger.info('Shutting down services...');
+
+  // Stop HTTP server
+  if (httpServer?.isRunning()) {
+    void httpServer.stop();
+  }
 
   // Clean up file watcher event listeners
   if (fileChangeCleanup) {

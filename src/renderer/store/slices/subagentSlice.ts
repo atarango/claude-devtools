@@ -2,6 +2,8 @@
  * Subagent slice - manages subagent drill-down state.
  */
 
+import { api } from '@renderer/api';
+
 import type { AppState, BreadcrumbItem } from '../types';
 import type { SubagentDetail } from '@renderer/types/data';
 import type { StateCreator } from 'zustand';
@@ -48,7 +50,7 @@ export const createSubagentSlice: StateCreator<AppState, [], [], SubagentSlice> 
   ) => {
     set({ subagentDetailLoading: true, subagentDetailError: null });
     try {
-      const detail = await window.electronAPI.getSubagentDetail(projectId, sessionId, subagentId);
+      const detail = await api.getSubagentDetail(projectId, sessionId, subagentId);
 
       if (!detail) {
         set({
@@ -108,7 +110,7 @@ export const createSubagentSlice: StateCreator<AppState, [], [], SubagentSlice> 
 
     set({ subagentDetailLoading: true, subagentDetailError: null });
 
-    window.electronAPI
+    api
       .getSubagentDetail(projectId, sessionId, targetItem.id)
       .then((detail) => {
         if (detail) {

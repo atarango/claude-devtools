@@ -2,6 +2,7 @@
  * Notification slice - manages notifications state and actions.
  */
 
+import { api } from '@renderer/api';
 import { createErrorNavigationRequest, findTabBySessionAndProject } from '@renderer/types/tabs';
 import { createLogger } from '@shared/utils/logger';
 
@@ -54,7 +55,7 @@ export const createNotificationSlice: StateCreator<AppState, [], [], Notificatio
     set({ notificationsLoading: true, notificationsError: null });
     try {
       // Fetch the full stored history (manager currently caps storage at 100).
-      const result = await window.electronAPI.notifications.get({
+      const result = await api.notifications.get({
         limit: NOTIFICATIONS_FETCH_LIMIT,
         offset: 0,
       });
@@ -80,7 +81,7 @@ export const createNotificationSlice: StateCreator<AppState, [], [], Notificatio
   // Mark a single notification as read
   markNotificationRead: async (id: string) => {
     try {
-      const success = await window.electronAPI.notifications.markRead(id);
+      const success = await api.notifications.markRead(id);
       if (!success) {
         await get().fetchNotifications();
         return;
@@ -101,7 +102,7 @@ export const createNotificationSlice: StateCreator<AppState, [], [], Notificatio
   // Mark all notifications as read
   markAllNotificationsRead: async () => {
     try {
-      const success = await window.electronAPI.notifications.markAllRead();
+      const success = await api.notifications.markAllRead();
       if (!success) {
         await get().fetchNotifications();
         return;
@@ -119,7 +120,7 @@ export const createNotificationSlice: StateCreator<AppState, [], [], Notificatio
   // Delete a single notification
   deleteNotification: async (id: string) => {
     try {
-      const success = await window.electronAPI.notifications.delete(id);
+      const success = await api.notifications.delete(id);
       if (!success) {
         await get().fetchNotifications();
         return;
@@ -138,7 +139,7 @@ export const createNotificationSlice: StateCreator<AppState, [], [], Notificatio
   // Clear all notifications
   clearNotifications: async () => {
     try {
-      const success = await window.electronAPI.notifications.clear();
+      const success = await api.notifications.clear();
       if (!success) {
         await get().fetchNotifications();
         return;

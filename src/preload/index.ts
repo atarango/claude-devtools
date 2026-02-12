@@ -6,6 +6,9 @@ import {
   CONTEXT_GET_ACTIVE,
   CONTEXT_LIST,
   CONTEXT_SWITCH,
+  HTTP_SERVER_GET_STATUS,
+  HTTP_SERVER_START,
+  HTTP_SERVER_STOP,
   SSH_CONNECT,
   SSH_DISCONNECT,
   SSH_GET_CONFIG_HOSTS,
@@ -44,6 +47,7 @@ import type {
   AppConfig,
   ContextInfo,
   ElectronAPI,
+  HttpServerStatus,
   NotificationTrigger,
   SessionsPaginationOptions,
   SshConfigHostEntry,
@@ -391,6 +395,19 @@ const electronAPI: ElectronAPI = {
           callback as (event: Electron.IpcRendererEvent, ...args: unknown[]) => void
         );
       };
+    },
+  },
+
+  // HTTP Server API
+  httpServer: {
+    start: async (): Promise<HttpServerStatus> => {
+      return invokeIpcWithResult<HttpServerStatus>(HTTP_SERVER_START);
+    },
+    stop: async (): Promise<HttpServerStatus> => {
+      return invokeIpcWithResult<HttpServerStatus>(HTTP_SERVER_STOP);
+    },
+    getStatus: async (): Promise<HttpServerStatus> => {
+      return ipcRenderer.invoke(HTTP_SERVER_GET_STATUS);
     },
   },
 };

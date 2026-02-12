@@ -204,12 +204,18 @@ export interface SshPersistConfig {
   lastActiveContextId: string;
 }
 
+export interface HttpServerConfig {
+  enabled: boolean;
+  port: number;
+}
+
 export interface AppConfig {
   notifications: NotificationConfig;
   general: GeneralConfig;
   display: DisplayConfig;
   sessions: SessionsConfig;
   ssh: SshPersistConfig;
+  httpServer: HttpServerConfig;
 }
 
 // Config section keys for type-safe updates
@@ -252,6 +258,10 @@ const DEFAULT_CONFIG: AppConfig = {
     autoReconnect: false,
     profiles: [],
     lastActiveContextId: 'local',
+  },
+  httpServer: {
+    enabled: false,
+    port: 3456,
   },
 };
 
@@ -376,6 +386,10 @@ export class ConfigManager {
       ssh: {
         ...DEFAULT_CONFIG.ssh,
         ...(loaded.ssh ?? {}),
+      },
+      httpServer: {
+        ...DEFAULT_CONFIG.httpServer,
+        ...(loaded.httpServer ?? {}),
       },
     };
   }

@@ -4,6 +4,7 @@
 
 import { useCallback, useState } from 'react';
 
+import { api } from '@renderer/api';
 import { useStore } from '@renderer/store';
 import { createLogger } from '@shared/utils/logger';
 
@@ -91,7 +92,7 @@ export function useTriggerForm(_options: UseTriggerFormOptions = {}): UseTrigger
     setPreviewResult({ loading: true, totalCount: 0, errors: [] });
 
     try {
-      const result = await window.electronAPI.config.testTrigger(trigger);
+      const result = await api.config.testTrigger(trigger);
       setPreviewResult({
         loading: false,
         totalCount: result.totalCount,

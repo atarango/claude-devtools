@@ -2,6 +2,7 @@
  * Session slice - manages session list state and pagination.
  */
 
+import { api } from '@renderer/api';
 import { createLogger } from '@shared/utils/logger';
 
 import type { AppState } from '../types';
@@ -71,7 +72,7 @@ export const createSessionSlice: StateCreator<AppState, [], [], SessionSlice> = 
   fetchSessions: async (projectId: string) => {
     set({ sessionsLoading: true, sessionsError: null });
     try {
-      const sessions = await window.electronAPI.getSessions(projectId);
+      const sessions = await api.getSessions(projectId);
       // Sort by createdAt (descending)
       const sorted = [...sessions].sort((a, b) => b.createdAt - a.createdAt);
       set({ sessions: sorted, sessionsLoading: false });
@@ -94,7 +95,7 @@ export const createSessionSlice: StateCreator<AppState, [], [], SessionSlice> = 
       sessionsTotalCount: 0,
     });
     try {
-      const result = await window.electronAPI.getSessionsPaginated(projectId, null, 20, {
+      const result = await api.getSessionsPaginated(projectId, null, 20, {
         includeTotalCount: false,
         prefilterAll: false,
       });
@@ -128,15 +129,10 @@ export const createSessionSlice: StateCreator<AppState, [], [], SessionSlice> = 
 
     set({ sessionsLoadingMore: true });
     try {
-      const result = await window.electronAPI.getSessionsPaginated(
-        selectedProjectId,
-        sessionsCursor,
-        20,
-        {
-          includeTotalCount: false,
-          prefilterAll: false,
-        }
-      );
+      const result = await api.getSessionsPaginated(selectedProjectId, sessionsCursor, 20, {
+        includeTotalCount: false,
+        prefilterAll: false,
+      });
       set((prevState) => ({
         sessions: [...prevState.sessions, ...result.sessions],
         sessionsCursor: result.nextCursor,
@@ -208,7 +204,7 @@ export const createSessionSlice: StateCreator<AppState, [], [], SessionSlice> = 
     projectRefreshGeneration.set(projectId, generation);
 
     try {
-      const result = await window.electronAPI.getSessionsPaginated(projectId, null, 20, {
+      const result = await api.getSessionsPaginated(projectId, null, 20, {
         includeTotalCount: false,
         prefilterAll: false,
       });
@@ -242,10 +238,10 @@ export const createSessionSlice: StateCreator<AppState, [], [], SessionSlice> = 
 
     try {
       if (isPinned) {
-        await window.electronAPI.config.unpinSession(projectId, sessionId);
+        await api.config.unpinSession(projectId, sessionId);
         set({ pinnedSessionIds: state.pinnedSessionIds.filter((id) => id !== sessionId) });
       } else {
-        await window.electronAPI.config.pinSession(projectId, sessionId);
+        await api.config.pinSession(projectId, sessionId);
         set({ pinnedSessionIds: [sessionId, ...state.pinnedSessionIds] });
       }
     } catch (error) {
@@ -263,7 +259,7 @@ export const createSessionSlice: StateCreator<AppState, [], [], SessionSlice> = 
     }
 
     try {
-      const config = await window.electronAPI.config.get();
+      const config = await api.config.get();
       const pins = config.sessions?.pinnedSessions?.[projectId] ?? [];
       set({ pinnedSessionIds: pins.map((p) => p.sessionId) });
     } catch (error) {

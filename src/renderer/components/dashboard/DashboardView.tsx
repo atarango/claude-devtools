@@ -9,6 +9,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 
+import { api } from '@renderer/api';
 import { useStore } from '@renderer/store';
 import { createLogger } from '@shared/utils/logger';
 import { useShallow } from 'zustand/react/shallow';
@@ -203,7 +204,7 @@ const NewProjectCard = (): React.JSX.Element => {
 
   const handleClick = async (): Promise<void> => {
     try {
-      const selectedPaths = await window.electronAPI.config.selectFolders();
+      const selectedPaths = await api.config.selectFolders();
       if (!selectedPaths || selectedPaths.length === 0) {
         return; // User cancelled
       }
@@ -221,7 +222,7 @@ const NewProjectCard = (): React.JSX.Element => {
       }
 
       // No match found - open the folder in file manager as fallback
-      const result = await window.electronAPI.openPath(selectedPath);
+      const result = await api.openPath(selectedPath);
       if (!result.success) {
         logger.error('Failed to open folder:', result.error);
       }

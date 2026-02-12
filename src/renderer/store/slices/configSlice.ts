@@ -2,6 +2,7 @@
  * Config slice - manages app configuration state and actions.
  */
 
+import { api } from '@renderer/api';
 import { createLogger } from '@shared/utils/logger';
 
 import type { AppState } from '../types';
@@ -40,7 +41,7 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (s
   fetchConfig: async () => {
     set({ configLoading: true, configError: null });
     try {
-      const config = await window.electronAPI.config.get();
+      const config = await api.config.get();
       set({
         appConfig: config,
         configLoading: false,
@@ -56,9 +57,9 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (s
   // Update a section of the app configuration
   updateConfig: async (section: string, data: Record<string, unknown>) => {
     try {
-      await window.electronAPI.config.update(section, data);
+      await api.config.update(section, data);
       // Refresh config after update
-      const config = await window.electronAPI.config.get();
+      const config = await api.config.get();
       set({ appConfig: config });
     } catch (error) {
       logger.error('Failed to update config:', error);

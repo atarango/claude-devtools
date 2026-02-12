@@ -121,3 +121,16 @@ export const CONTEXT_SWITCH = 'context:switch';
 
 /** Context changed event channel (main -> renderer) */
 export const CONTEXT_CHANGED = 'context:changed';
+
+// =============================================================================
+// HTTP Server API Channels
+// =============================================================================
+
+/** Start HTTP sidecar server */
+export const HTTP_SERVER_START = 'httpServer:start';
+
+/** Stop HTTP sidecar server */
+export const HTTP_SERVER_STOP = 'httpServer:stop';
+
+/** Get HTTP server status */
+export const HTTP_SERVER_GET_STATUS = 'httpServer:getStatus';

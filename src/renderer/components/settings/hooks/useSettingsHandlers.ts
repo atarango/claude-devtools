@@ -5,6 +5,7 @@
 
 import { useCallback, useRef } from 'react';
 
+import { api } from '@renderer/api';
 import { useStore } from '@renderer/store';
 
 import type { RepositoryDropdownItem } from './useSettingsConfig';
@@ -99,7 +100,7 @@ export function useSettingsHandlers({
     async (minutes: number) => {
       try {
         setSaving(true);
-        const updatedConfig = await window.electronAPI.config.snooze(minutes);
+        const updatedConfig = await api.config.snooze(minutes);
         setConfig(updatedConfig);
         setOptimisticConfig(updatedConfig);
         setStoreState({ appConfig: updatedConfig });
@@ -115,7 +116,7 @@ export function useSettingsHandlers({
   const handleClearSnooze = useCallback(async () => {
     try {
       setSaving(true);
-      const updatedConfig = await window.electronAPI.config.clearSnooze();
+      const updatedConfig = await api.config.clearSnooze();
       setConfig(updatedConfig);
       setOptimisticConfig(updatedConfig);
       setStoreState({ appConfig: updatedConfig });
@@ -130,7 +131,7 @@ export function useSettingsHandlers({
     async (item: RepositoryDropdownItem) => {
       try {
         setSaving(true);
-        const updatedConfig = await window.electronAPI.config.addIgnoreRepository(item.id);
+        const updatedConfig = await api.config.addIgnoreRepository(item.id);
         setConfig(updatedConfig);
         setOptimisticConfig(updatedConfig);
         setStoreState({ appConfig: updatedConfig });
@@ -147,7 +148,7 @@ export function useSettingsHandlers({
     async (repositoryId: string) => {
       try {
         setSaving(true);
-        const updatedConfig = await window.electronAPI.config.removeIgnoreRepository(repositoryId);
+        const updatedConfig = await api.config.removeIgnoreRepository(repositoryId);
         setConfig(updatedConfig);
         setOptimisticConfig(updatedConfig);
         setStoreState({ appConfig: updatedConfig });
@@ -165,7 +166,7 @@ export function useSettingsHandlers({
     async (trigger: Omit<NotificationTrigger, 'isBuiltin'>) => {
       try {
         setSaving(true);
-        const updatedConfig = await window.electronAPI.config.addTrigger(trigger);
+        const updatedConfig = await api.config.addTrigger(trigger);
         setConfig(updatedConfig);
         setOptimisticConfig(updatedConfig);
         setStoreState({ appConfig: updatedConfig });
@@ -198,7 +199,7 @@ export function useSettingsHandlers({
 
       try {
         setSaving(true);
-        const updatedConfig = await window.electronAPI.config.updateTrigger(triggerId, updates);
+        const updatedConfig = await api.config.updateTrigger(triggerId, updates);
         setConfig(updatedConfig);
         setOptimisticConfig(updatedConfig);
         setStoreState({ appConfig: updatedConfig });
@@ -217,7 +218,7 @@ export function useSettingsHandlers({
     async (triggerId: string) => {
       try {
         setSaving(true);
-        const updatedConfig = await window.electronAPI.config.removeTrigger(triggerId);
+        const updatedConfig = await api.config.removeTrigger(triggerId);
         setConfig(updatedConfig);
         setOptimisticConfig(updatedConfig);
         setStoreState({ appConfig: updatedConfig });
@@ -296,12 +297,9 @@ export function useSettingsHandlers({
         },
       };
 
-      await window.electronAPI.config.update('notifications', defaultConfig.notifications);
-      await window.electronAPI.config.update('general', defaultConfig.general);
-      const updatedConfig = await window.electronAPI.config.update(
-        'display',
-        defaultConfig.display
-      );
+      await api.config.update('notifications', defaultConfig.notifications);
+      await api.config.update('general', defaultConfig.general);
+      const updatedConfig = await api.config.update('display', defaultConfig.display);
       setConfig(updatedConfig);
       setOptimisticConfig(updatedConfig);
       setStoreState({ appConfig: updatedConfig });
@@ -328,7 +326,7 @@ export function useSettingsHandlers({
 
   const handleOpenInEditor = useCallback(async () => {
     try {
-      await window.electronAPI.config.openInEditor();
+      await api.config.openInEditor();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to open config in editor');
     }
@@ -348,16 +346,16 @@ export function useSettingsHandlers({
         const importedConfig = JSON.parse(text) as AppConfig;
 
         if (importedConfig.notifications) {
-          await window.electronAPI.config.update('notifications', importedConfig.notifications);
+          await api.config.update('notifications', importedConfig.notifications);
         }
         if (importedConfig.general) {
-          await window.electronAPI.config.update('general', importedConfig.general);
+          await api.config.update('general', importedConfig.general);
         }
         if (importedConfig.display) {
-          await window.electronAPI.config.update('display', importedConfig.display);
+          await api.config.update('display', importedConfig.display);
         }
 
-        const updatedConfig = await window.electronAPI.config.get();
+        const updatedConfig = await api.config.get();
         setConfig(updatedConfig);
         setOptimisticConfig(updatedConfig);
         setStoreState({ appConfig: updatedConfig });

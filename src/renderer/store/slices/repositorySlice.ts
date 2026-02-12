@@ -2,6 +2,7 @@
  * Repository slice - manages repository grouping state (worktree support).
  */
 
+import { api } from '@renderer/api';
 import { createLogger } from '@shared/utils/logger';
 
 import { getSessionResetState } from '../utils/stateResetHelpers';
@@ -52,7 +53,7 @@ export const createRepositorySlice: StateCreator<AppState, [], [], RepositorySli
   fetchRepositoryGroups: async () => {
     set({ repositoryGroupsLoading: true, repositoryGroupsError: null });
     try {
-      const groups = await window.electronAPI.getRepositoryGroups();
+      const groups = await api.getRepositoryGroups();
       // Already sorted by most recent session in the scanner
       set({ repositoryGroups: groups, repositoryGroupsLoading: false });
     } catch (error) {

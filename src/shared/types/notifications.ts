@@ -275,4 +275,11 @@ export interface AppConfig {
     /** Pinned sessions per project. Key is projectId, value is array of pinned sessions */
     pinnedSessions: Record<string, { sessionId: string; pinnedAt: number }[]>;
   };
+  /** HTTP sidecar server settings for iframe embedding */
+  httpServer?: {
+    /** Whether the HTTP server is enabled */
+    enabled: boolean;
+    /** Port for the HTTP server (default 3456) */
+    port: number;
+  };
 }

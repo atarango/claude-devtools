@@ -7,6 +7,7 @@ import type {
   AppConfig,
   DisplayConfig,
   GeneralConfig,
+  HttpServerConfig,
   NotificationConfig,
   NotificationTrigger,
 } from '../services';
@@ -28,9 +29,15 @@ export type ConfigUpdateValidationResult =
   | ValidationSuccess<'notifications'>
   | ValidationSuccess<'general'>
   | ValidationSuccess<'display'>
+  | ValidationSuccess<'httpServer'>
   | ValidationFailure;
 
-const VALID_SECTIONS = new Set<ConfigSection>(['notifications', 'general', 'display']);
+const VALID_SECTIONS = new Set<ConfigSection>([
+  'notifications',
+  'general',
+  'display',
+  'httpServer',
+]);
 const MAX_SNOOZE_MINUTES = 24 * 60;
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -271,12 +278,58 @@ function validateDisplaySection(data: unknown): ValidationSuccess<'display'> | V
   };
 }
 
+function validateHttpServerSection(
+  data: unknown
+): ValidationSuccess<'httpServer'> | ValidationFailure {
+  if (!isPlainObject(data)) {
+    return { valid: false, error: 'httpServer update must be an object' };
+  }
+
+  const allowedKeys: (keyof HttpServerConfig)[] = ['enabled', 'port'];
+  const result: Partial<HttpServerConfig> = {};
+
+  for (const [key, value] of Object.entries(data)) {
+    if (!allowedKeys.includes(key as keyof HttpServerConfig)) {
+      return { valid: false, error: `httpServer.${key} is not a valid setting` };
+    }
+
+    switch (key as keyof HttpServerConfig) {
+      case 'enabled':
+        if (typeof value !== 'boolean') {
+          return { valid: false, error: 'httpServer.enabled must be a boolean' };
+        }
+        result.enabled = value;
+        break;
+      case 'port':
+        if (!isFiniteNumber(value) || !Number.isInteger(value) || value < 1024 || value > 65535) {
+          return {
+            valid: false,
+            error: 'httpServer.port must be an integer between 1024 and 65535',
+          };
+        }
+        result.port = value;
+        break;
+      default:
+        return { valid: false, error: `Unsupported httpServer key: ${key}` };
+    }
+  }
+
+  return {
+    valid: true,
+    section: 'httpServer',
+    data: result,
+  };
+}
+
 export function validateConfigUpdatePayload(
   section: unknown,
   data: unknown
 ): ConfigUpdateValidationResult {
   if (typeof section !== 'string' || !VALID_SECTIONS.has(section as ConfigSection)) {
-    return { valid: false, error: 'Section must be one of: notifications, general, display' };
+    return {
+      valid: false,
+      error: 'Section must be one of: notifications, general, display, httpServer',
+    };
   }
 
   switch (section as ConfigSection) {
@@ -286,6 +339,8 @@ export function validateConfigUpdatePayload(
       return validateGeneralSection(data);
     case 'display':
       return validateDisplaySection(data);
+    case 'httpServer':
+      return validateHttpServerSection(data);
     default:
       return { valid: false, error: 'Invalid section' };
   }

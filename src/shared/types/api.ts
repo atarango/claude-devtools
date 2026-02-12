@@ -243,6 +243,27 @@ export interface SshAPI {
 }
 
 // =============================================================================
+// HTTP Server API
+// =============================================================================
+
+/**
+ * HTTP server status returned from main process.
+ */
+export interface HttpServerStatus {
+  running: boolean;
+  port: number;
+}
+
+/**
+ * HTTP Server API for controlling the sidecar server.
+ */
+export interface HttpServerAPI {
+  start: () => Promise<HttpServerStatus>;
+  stop: () => Promise<HttpServerStatus>;
+  getStatus: () => Promise<HttpServerStatus>;
+}
+
+// =============================================================================
 // Main Electron API
 // =============================================================================
 
@@ -334,6 +355,9 @@ export interface ElectronAPI {
     switch: (contextId: string) => Promise<{ contextId: string }>;
     onChanged: (callback: (event: unknown, data: ContextInfo) => void) => () => void;
   };
+
+  // HTTP Server API
+  httpServer: HttpServerAPI;
 }
 
 // =============================================================================

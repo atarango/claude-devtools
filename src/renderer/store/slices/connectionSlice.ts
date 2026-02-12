@@ -5,6 +5,8 @@
  * and provides actions for connecting/disconnecting.
  */
 
+import { api } from '@renderer/api';
+
 import { getFullResetState } from '../utils/stateResetHelpers';
 
 import type { AppState } from '../types';
@@ -68,7 +70,7 @@ export const createConnectionSlice: StateCreator<AppState, [], [], ConnectionSli
     });
 
     try {
-      const status = await window.electronAPI.ssh.connect(config);
+      const status = await api.ssh.connect(config);
       set({
         connectionMode: status.state === 'connected' ? 'ssh' : 'local',
         connectionState: status.state,
@@ -93,7 +95,7 @@ export const createConnectionSlice: StateCreator<AppState, [], [], ConnectionSli
           privateKeyPath: config.privateKeyPath,
         };
         set({ lastSshConfig: saved });
-        void window.electronAPI.ssh.saveLastConnection(saved);
+        void api.ssh.saveLastConnection(saved);
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -106,7 +108,7 @@ export const createConnectionSlice: StateCreator<AppState, [], [], ConnectionSli
 
   disconnectSsh: async (): Promise<void> => {
     try {
-      const status = await window.electronAPI.ssh.disconnect();
+      const status = await api.ssh.disconnect();
       set({
         connectionMode: 'local',
         connectionState: status.state,
@@ -130,7 +132,7 @@ export const createConnectionSlice: StateCreator<AppState, [], [], ConnectionSli
     config: SshConnectionConfig
   ): Promise<{ success: boolean; error?: string }> => {
     try {
-      return await window.electronAPI.ssh.test(config);
+      return await api.ssh.test(config);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       return { success: false, error: message };
@@ -152,7 +154,7 @@ export const createConnectionSlice: StateCreator<AppState, [], [], ConnectionSli
 
   fetchSshConfigHosts: async (): Promise<void> => {
     try {
-      const hosts = await window.electronAPI.ssh.getConfigHosts();
+      const hosts = await api.ssh.getConfigHosts();
       set({ sshConfigHosts: hosts });
     } catch {
       // Gracefully ignore - SSH config may not exist
@@ -162,7 +164,7 @@ export const createConnectionSlice: StateCreator<AppState, [], [], ConnectionSli
 
   resolveConfigHost: async (alias: string): Promise<SshConfigHostEntry | null> => {
     try {
-      return await window.electronAPI.ssh.resolveHost(alias);
+      return await api.ssh.resolveHost(alias);
     } catch {
       return null;
     }
@@ -170,7 +172,7 @@ export const createConnectionSlice: StateCreator<AppState, [], [], ConnectionSli
 
   loadLastConnection: async (): Promise<void> => {
     try {
-      const saved = await window.electronAPI.ssh.getLastConnection();
+      const saved = await api.ssh.getLastConnection();
       set({ lastSshConfig: saved });
     } catch {
       // Gracefully ignore - no saved connection
