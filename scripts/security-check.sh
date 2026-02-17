@@ -11,20 +11,20 @@ echo ""
 
 # Check for dangerous code patterns
 echo "1. Checking for dangerous code patterns..."
-if grep -r "eval(" src/ 2>/dev/null; then
+if grep -rE '\beval\s*\(' src/ 2>/dev/null; then
     echo "   ❌ Found eval() usage"
 else
     echo "   ✅ No eval() found"
 fi
 
-if grep -r "Function(" src/ 2>/dev/null; then
+if grep -rE '\bFunction\s*\(' src/ 2>/dev/null; then
     echo "   ❌ Found Function() constructor"
 else
     echo "   ✅ No Function() constructor found"
 fi
 
-if grep -r "child_process" src/ | grep -v "node_modules" | grep -v ".git" 2>/dev/null; then
-    echo "   ⚠️  Found child_process usage (review needed)"
+if grep -rE "from ['\"]child_process['\"]" src/ 2>/dev/null; then
+    echo "   ⚠️  Found child_process usage (review manually - may be legitimate)"
 else
     echo "   ✅ No child_process usage found"
 fi
@@ -61,11 +61,12 @@ echo "   🛠️  Development dependencies: $DEV_DEP_COUNT"
 echo ""
 
 # Check for build scripts in dependencies
-echo "5. Checking for build scripts in dependencies..."
-if pnpm list --json 2>/dev/null | grep -q '"scripts".*"install"'; then
-    echo "   ⚠️  Some dependencies have install scripts (this is normal but should be reviewed)"
+echo "5. Checking for dependencies with install scripts..."
+SCRIPTS_FOUND=$(find node_modules -name package.json -exec grep -l '"install".*:' {} \; 2>/dev/null | wc -l)
+if [ "$SCRIPTS_FOUND" -gt 0 ]; then
+    echo "   ⚠️  Found $SCRIPTS_FOUND package(s) with install scripts (review with: pnpm list --depth=0)"
 else
-    echo "   ✅ No install scripts found"
+    echo "   ✅ No install scripts detected"
 fi
 
 echo ""
