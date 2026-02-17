@@ -35,6 +35,8 @@
     "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm build",
     "fix": "pnpm lint:fix && pnpm format",
     "quality": "pnpm check && pnpm format:check && npx knip",
+    "security:audit": "pnpm audit",
+    "security:check": "pnpm audit && pnpm lint && pnpm typecheck",
     "test:chunks": "tsx test/test-chunk-building.ts",
     "test:semantic": "tsx test/test-semantic-steps.ts",
     "test:noise": "tsx test/test-noise-filtering.ts",
