@@ -22,6 +22,7 @@
   <a href="https://claude-dev.tools"><img src="https://img.shields.io/badge/Website-claude--dev.tools-blue?style=flat-square" alt="Website" /></a>&nbsp;
   <a href="https://github.com/matt1398/claude-devtools/releases/latest"><img src="https://img.shields.io/github/v/release/matt1398/claude-devtools?style=flat-square&label=version&color=blue" alt="Latest Release" /></a>&nbsp;
   <a href="https://github.com/matt1398/claude-devtools/actions/workflows/ci.yml"><img src="https://github.com/matt1398/claude-devtools/actions/workflows/ci.yml/badge.svg" alt="CI Status" /></a>&nbsp;
+  <a href="https://github.com/matt1398/claude-devtools/actions/workflows/security.yml"><img src="https://github.com/matt1398/claude-devtools/actions/workflows/security.yml/badge.svg" alt="Security Scan" /></a>&nbsp;
   <a href="https://github.com/matt1398/claude-devtools/releases"><img src="https://img.shields.io/github/downloads/matt1398/claude-devtools/total?style=flat-square&color=green" alt="Downloads" /></a>&nbsp;
   <img src="https://img.shields.io/badge/platform-macOS%20(Apple%20Silicon%20%2B%20Intel)%20%7C%20Linux%20%7C%20Windows%20%7C%20Docker-lightgrey?style=flat-square" alt="Platform" />
 </p>
@@ -306,7 +307,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines. Please read o
 
 ## Security
 
-IPC handlers validate all inputs with strict path containment checks. File reads are constrained to the project root and `~/.claude`. Sensitive credential paths are blocked. See [SECURITY.md](SECURITY.md) for details.
+IPC handlers validate all inputs with strict path containment checks. File reads are constrained to the project root and `~/.claude`. Sensitive credential paths are blocked. See [SECURITY.md](SECURITY.md) for our security policy.
+
+**Verify Repository Security**: For instructions on checking this repository for malware and vulnerabilities, see [MALWARE_CHECKING.md](MALWARE_CHECKING.md).
 
 ## License
 
